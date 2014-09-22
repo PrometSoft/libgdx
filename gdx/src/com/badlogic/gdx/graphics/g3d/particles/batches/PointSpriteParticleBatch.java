@@ -59,17 +59,29 @@ public class PointSpriteParticleBatch extends BufferedParticleBatch<PointSpriteC
 	}
 	
 	public PointSpriteParticleBatch (int capacity) {
+		this(capacity, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
+	}
+
+	public PointSpriteParticleBatch(int capacity, int blendingSourceFunc, int blendingDestFunc) {
+		this(capacity, blendingSourceFunc, blendingDestFunc, new ParticleShader.Config(ParticleType.Point));
+	}
+	
+	public PointSpriteParticleBatch(int capacity, ParticleShader.Config config) {
+		this(capacity, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA, config);
+	}
+
+	public PointSpriteParticleBatch(int capacity, int blendingSourceFunc, int blendingDestFunc, ParticleShader.Config config) {
 		super(PointSpriteControllerRenderData.class);
-		
+		config.type = ParticleType.Point;
 		if(!pointSpritesEnabled)
 			enablePointSprites();
 			
-		allocRenderable();
+		allocRenderable(blendingSourceFunc, blendingDestFunc);
 		ensureCapacity(capacity);
-		renderable.shader = new ParticleShader(renderable, new ParticleShader.Config(ParticleType.Point));
+		renderable.shader = new ParticleShader(renderable, config);
 		renderable.shader.init();
 	}
-
+	
 	@Override
 	protected void allocParticlesData(int capacity){
 		vertices = new float[capacity * CPU_VERTEX_SIZE];
@@ -78,11 +90,11 @@ public class PointSpriteParticleBatch extends BufferedParticleBatch<PointSpriteC
 		renderable.mesh = new Mesh(false, capacity, 0, CPU_ATTRIBUTES);
 	}
 	
-	protected void allocRenderable(){
+	protected void allocRenderable(int blendingSourceFunc, int blendingDestFunc){
 		renderable = new Renderable();
 		renderable.primitiveType = GL20.GL_POINTS;
 		renderable.meshPartOffset = 0;
-		renderable.material = new Material(	new BlendingAttribute(GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+		renderable.material = new Material(new BlendingAttribute(blendingSourceFunc, blendingDestFunc, 1f),
 			new DepthTestAttribute(GL20.GL_LEQUAL, false),
 			TextureAttribute.createDiffuse((Texture)null));
 	}
